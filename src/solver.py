@@ -14,10 +14,9 @@ class SudokuSolver:
         :param grid: Une grille de Sudoku
         :type grid: SudokuGrid
         """
-        self.logs = []
-
         self.grid = grid
-        self.cases_vides_possibilites = {}
+        self.cases_vides_possibilites = {} # un dict avec les clés = un tuple des coordonnées (row, col) d'une case, 
+                                           # et les valeurs = un set des valeurs possibles à cette case
 
         for case_vide in self.grid.get_empty_pos():
             self.cases_vides_possibilites[case_vide] = set(range(1, 10))
@@ -30,16 +29,15 @@ class SudokuSolver:
         et élimine toutes les valeurs impossibles pour chaque case vide.
         *Indication: Vous pouvez utiliser les fonction ``get_row``, ``get_col`` et ``get_region`` de la grille*
         """
-        for case_vide_coords in list(self.cases_vides_possibilites.keys()):
+        for case_vide_coords in list(self.cases_vides_possibilites.keys()):  # cast en list pour faire une copie et pouvoir del
             impossibles_row = set(self.grid.get_row(case_vide_coords[0]))
             impossibles_col = set(self.grid.get_col(case_vide_coords[1]))
             impossibles_reg = set(self.grid.get_region(
                 case_vide_coords[0] // 3, case_vide_coords[1] // 3))
 
-            self.cases_vides_possibilites[case_vide_coords] = self.cases_vides_possibilites[case_vide_coords].difference(
-                impossibles_row | impossibles_col | impossibles_reg)
+            self.cases_vides_possibilites[case_vide_coords] = self.cases_vides_possibilites[case_vide_coords].difference(impossibles_row | impossibles_col | impossibles_reg)
 
-            if len(self.cases_vides_possibilites[case_vide_coords]) == 0:
+            if not self.cases_vides_possibilites[case_vide_coords]:
                 del self.cases_vides_possibilites[case_vide_coords]
 
     def reduce_domains(self, last_i, last_j, last_v):
@@ -54,11 +52,11 @@ class SudokuSolver:
         :type last_j: int
         :type last_v: int
         """
-        for case_vide_coords in list(self.cases_vides_possibilites.keys()):
+        for case_vide_coords in list(self.cases_vides_possibilites.keys()):  # cast en list pour faire une copie et pouvoir del
             if case_vide_coords[0] == last_i or case_vide_coords[1] == last_j or (case_vide_coords[0] // 3 == last_i // 3 and case_vide_coords[1] // 3 == last_j // 3):
                 self.cases_vides_possibilites[case_vide_coords].discard(last_v)
 
-                if len(self.cases_vides_possibilites[case_vide_coords]) == 0:
+                if not self.cases_vides_possibilites[case_vide_coords]:
                     del self.cases_vides_possibilites[case_vide_coords]
 
     def commit_one_var(self):
@@ -72,8 +70,7 @@ class SudokuSolver:
         """
         for case_vide_coords, case_vide_valeurs in self.cases_vides_possibilites.items():
             if len(case_vide_valeurs) == 1:
-                last = (case_vide_coords[0], case_vide_coords[1], list(
-                    case_vide_valeurs)[0])
+                last = (case_vide_coords[0], case_vide_coords[1], list(case_vide_valeurs)[0])
                 self.grid.write(last[0], last[1], last[2])
                 return last
 
@@ -98,16 +95,6 @@ class SudokuSolver:
                 i = 0
                 i_max -= 1
 
-    """
-    def solve_step(self):
-        while len(self.grid.get_empty_pos()) != 0:
-            last = self.commit_one_var()
-            if last is not None:
-                self.reduce_domains(last[0], last[1], last[2])
-            else:
-                break
-    """
-
     def is_valid(self):
         """À COMPLÉTER
         Cette méthode vérifie qu'il reste des possibilités pour chaque case vide
@@ -115,12 +102,14 @@ class SudokuSolver:
         :return: Un booléen indiquant si la solution partielle actuelle peut encore mener à une solution valide
         :rtype: bool
         """
-        valid = True
+        if len(self.cases_vides_possibilites) == 0:
+            return False
+
         for possibilites in self.cases_vides_possibilites.values():
-            if len(possibilites) == 0:
-                valid = False
-                break
-        return valid
+            if not possibilites:
+                return False
+
+        return True
 
     def is_solved(self):
         """À COMPLÉTER
@@ -129,7 +118,7 @@ class SudokuSolver:
         :return: Un booléen indiquant si la solution actuelle est complète.
         :rtype: bool
         """
-        return len(self.grid.get_empty_pos()) == 0
+        return not self.grid.get_empty_pos()
 
     def branch(self):
         """À COMPLÉTER
@@ -145,16 +134,16 @@ class SudokuSolver:
         :rtype: list of SudokuSolver
         """
         instances = []
-        self.logs.append("Exploration des " + str(len(self.cases_vides_possibilites)) + " cases vides")
-        for cases_vides_coords, cases_vides_valeurs in self.cases_vides_possibilites.items():
-            out = "New branch : " + str(cases_vides_coords) + " = "
-            for valeur in cases_vides_valeurs:
-                newGrid = self.grid.copy()
-                out += str(valeur) + ", "
-                newGrid.write(
-                    cases_vides_coords[0], cases_vides_coords[1], valeur)
-                instances.append(SudokuSolver(newGrid))
-            self.logs.append(out)
+        possibilites_triees = sorted(self.cases_vides_possibilites.items(), key=lambda v: len(v[1]))  # tri par taille des set de possibilités
+
+        # on choisit la premiere possibilites_triees, aka celle avec le moins de choix possible
+        (case_coos, case_values) = possibilites_triees[0]
+
+        for valeur in case_values:
+            new_grid = self.grid.copy()
+            new_grid.write(case_coos[0], case_coos[1], valeur)
+            instances.append(SudokuSolver(new_grid))
+
         return instances
 
     def solve(self):
@@ -171,20 +160,13 @@ class SudokuSolver:
         :rtype: SudokuGrid or None
         """
         self.solve_step()
+
         if self.is_solved():
-            self.logs.append("IS SOLVED")
-            if self.is_valid():
-                self.logs.append("IS VALID")
-                return self.grid
-            else:
-                self.logs.append("IS NOT VALID")
-                return None
-        else:
-            self.logs.append("IS NOT SOLVED")
+            return self.grid
+
+        if self.is_valid():
             instances = self.branch()
-            self.logs.append("Branched " + str(len(instances)))
             for instance in instances:
-                self.logs.append("Solving instance " + str(instance))
                 s = instance.solve()
                 if s != None:
                     return s

@@ -9,7 +9,7 @@ import multiprocessing
 
 def solve_all(running_times):
     for l in range(1, 245):
-        g = SudokuGrid.from_file(os.path.join(os.path.dirname(__file__), "..", "sudoku_db.txt", l)
+        g = SudokuGrid.from_file(os.path.join(os.path.dirname(__file__), "..", "sudoku_db.txt"), l)
         start = time.monotonic()
         solver = SudokuSolver(g)
         solver.solve()

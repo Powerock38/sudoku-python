@@ -1,7 +1,4 @@
 # -*-coding: utf8-*-
-import sys
-from multiprocessing import Value
-
 
 class SudokuGrid:
     """Cette classe représente une grille de Sudoku.
@@ -20,7 +17,7 @@ class SudokuGrid:
         if len(initial_values_str) != 81:
             raise ValueError()
 
-        self.grille = [[] for _ in range(0, 9)]
+        self.grille = tuple([] for _ in range(9))
 
         for i, str_n in enumerate(initial_values_str):
             n = int(str_n)
@@ -44,13 +41,12 @@ class SudokuGrid:
         :rtype: SudokuGrid
         """
         l = ""
-        f = open(filename, "r")
-        for i, fileline in enumerate(f):
-            if i == line - 1:
-                l = fileline[:-1]
-                break
+        with open(filename, "r") as f:
+            for i, fileline in enumerate(f):
+                if i == line - 1:
+                    l = fileline[:-1]  # on ne prend pas le dernier char de la ligne qui est un \n
+                    break
 
-        f.close()
         return SudokuGrid(l)
 
     @staticmethod
@@ -62,7 +58,6 @@ class SudokuGrid:
         :return: La grille de Sudoku correspondant à la ligne donnée par l'utilisateur
         :rtype: SudokuGrid
         """
-        # return SudokuGrid(sys.stdin.read())
         return SudokuGrid(input())
 
     def __str__(self):
@@ -72,6 +67,7 @@ class SudokuGrid:
         :rtype: str
         """
         out = ""
+
         for row in self.grille:
             out += ''.join(str(e) for e in row) + '\n'
 
@@ -97,7 +93,7 @@ class SudokuGrid:
         :return: La liste des valeurs présentes à la colonne donnée
         :rtype: list of int
         """
-        return [self.grille[i][j] for i in range(len(self.grille))]
+        return [self.grille[i][j] for i in range(9)]
 
     def get_region(self, reg_row, reg_col):
         """À COMPLÉTER!
@@ -113,8 +109,7 @@ class SudokuGrid:
         out = []
 
         for i in range(3):
-            out.extend(self.grille[3 * reg_row + i]
-                       [3 * reg_col:3 * reg_col + 3])
+            out.extend(self.grille[3 * reg_row + i][3 * reg_col:3 * reg_col + 3])
 
         return out
 
@@ -127,6 +122,7 @@ class SudokuGrid:
         :rtype: list of tuple of int
         """
         out = []
+
         for i, row in enumerate(self.grille):
             for j, n in enumerate(row):
                 if n == 0:
@@ -147,6 +143,8 @@ class SudokuGrid:
         """
         if 0 <= i <= 8 and 0 <= j <= 8 and 0 <= v <= 9 and (self.grille[i][j] == 0 or force):
             self.grille[i][j] = v
+        else:
+            raise ValueError()
 
     def copy(self):
         """À COMPLÉTER!

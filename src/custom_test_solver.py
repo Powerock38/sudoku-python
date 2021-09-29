@@ -55,8 +55,6 @@ class SudokuSolverTest:
                 r = str(case_vide_coords) + " : " + str(case_vide_valeurs)
         print(r + "\n")
 
-        print('\n'.join(self.solver.logs))
-
     def keyboard_input(self, key):
         if key == keyboard.Key.up and self.cursorY > 0:
             self.cursorY -= 1
@@ -71,8 +69,7 @@ class SudokuSolverTest:
             self.cursorX += 1
 
         elif hasattr(key, 'char') and key.char == 's':
-            r = self.solver.solve()
-            self.solver.logs.append("Solve : " + str(r))
+            self.solver.solve()
 
         self.display()
 
