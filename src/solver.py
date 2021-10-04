@@ -15,8 +15,8 @@ class SudokuSolver:
         :type grid: SudokuGrid
         """
         self.grid = grid
-        self.cases_vides_possibilites = {} # un dict avec les clés = un tuple des coordonnées (row, col) d'une case, 
-                                           # et les valeurs = un set des valeurs possibles à cette case
+        self.cases_vides_possibilites = {}  # un dict avec les clés = un tuple des coordonnées (row, col) d'une case,
+        # et les valeurs = un set des valeurs possibles à cette case
 
         for case_vide in self.grid.get_empty_pos():
             self.cases_vides_possibilites[case_vide] = set(range(1, 10))
@@ -74,6 +74,37 @@ class SudokuSolver:
                 self.grid.write(last[0], last[1], last[2])
                 return last
 
+    """"
+    def commit_one_value(self):
+        # Méthode rajoutée
+        # Vérifie s'il ne reste plus qu'une seule position valide pour une certaine valeur
+        # sur chaque ligne, chaque colonne et dans chaque région
+        
+        for v in range(1, 10):
+            ok_set = {s for s in range(10) if s != v}
+
+            for i, row in enumerate(self.grid.grille):
+                if row.count(0) == 1 and set(row) == ok_set:  # si il manque qu'une valeur et que c'est v
+                    last = (i, row.index(0), v)
+                    self.grid.write(last[0], last[1], last[2])
+                    return last
+
+            for j in range(9):
+                col = self.grid.get_col(j)
+                if col.count(0) == 1 and set(col) == ok_set:
+                    last = (col.index(0), j, v)
+                    self.grid.write(last[0], last[1], last[2])
+                    return last
+
+            for reg_row in range(3):
+                for reg_col in range(3):
+                    reg = self.grid.get_region(reg_row, reg_col)
+                    if reg.count(0) == 1 and set(reg) == ok_set:
+                        last = (reg_row * 3 + (reg.index(0) // 3), reg_col * 3 + (reg.index(0) % 3), v)
+                        self.grid.write(last[0], last[1], last[2])
+                        return last
+    """
+
     def solve_step(self):
         """À COMPLÉTER
         Cette méthode alterne entre l'affectation de case pour lesquelles il n'y a plus qu'une possibilité
@@ -86,11 +117,13 @@ class SudokuSolver:
         sur chaque ligne, chaque colonne et dans chaque région*
         """
         i = 0
-        i_max = len(self.grid.get_empty_pos())
-        while len(self.grid.get_empty_pos()) != 0 and i < i_max:
+        i_max = self.grid.count_empty_pos()
+        while self.grid.count_empty_pos() != 0 and i < i_max:
             i += 1
             last = self.commit_one_var()
-            if last != None:
+            # if last is None:
+            #   last = self.commit_one_value()
+            if last is not None:
                 self.reduce_domains(last[0], last[1], last[2])
                 i = 0
                 i_max -= 1
@@ -133,7 +166,6 @@ class SudokuSolver:
         :return: Une liste de sous-problèmes ayant chacun une valeur différente pour la variable choisie
         :rtype: list of SudokuSolver
         """
-        instances = []
         possibilites_triees = sorted(self.cases_vides_possibilites.items(), key=lambda v: len(v[1]))  # tri par taille des set de possibilités
 
         # on choisit la premiere possibilites_triees, aka celle avec le moins de choix possible
@@ -142,9 +174,7 @@ class SudokuSolver:
         for valeur in case_values:
             new_grid = self.grid.copy()
             new_grid.write(case_coos[0], case_coos[1], valeur)
-            instances.append(SudokuSolver(new_grid))
-
-        return instances
+            yield SudokuSolver(new_grid)
 
     def solve(self):
         """
@@ -165,8 +195,7 @@ class SudokuSolver:
             return self.grid
 
         if self.is_valid():
-            instances = self.branch()
-            for instance in instances:
+            for instance in self.branch():
                 s = instance.solve()
-                if s != None:
+                if s is not None:
                     return s

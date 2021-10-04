@@ -1,5 +1,7 @@
 # -*-coding: utf8-*-
 
+from copy import deepcopy
+
 class SudokuGrid:
     """Cette classe représente une grille de Sudoku.
     Toutes ces méthodes sont à compléter en vous basant sur la documentation fournie en docstring.
@@ -21,11 +23,7 @@ class SudokuGrid:
 
         for i, str_n in enumerate(initial_values_str):
             n = int(str_n)
-
-            if 0 <= n <= 9:
-                self.grille[i // 9].append(n)
-            else:
-                raise ValueError()
+            self.grille[i // 9].append(n)
 
     @staticmethod
     def from_file(filename, line):
@@ -83,6 +81,8 @@ class SudokuGrid:
         :rtype: list of int
         """
         return self.grille[i]
+        # Utiliser un générateur pour cette méthode ne fait pas de sens et est moins pratique. Voici le code tout de même (remplace tout ce qu'il y a au-dessus)
+        # return (n for n in self.grille[i])
 
     def get_col(self, j):
         """À COMPLÉTER!
@@ -94,6 +94,9 @@ class SudokuGrid:
         :rtype: list of int
         """
         return [self.grille[i][j] for i in range(9)]
+
+        # Utiliser un générateur pour cette méthode ne fait pas de sens et est moins pratique. Voici le code tout de même (remplace tout ce qu'il y a au-dessus)
+        # return (n for n in [self.grille[i][j] for i in range(9)])
 
     def get_region(self, reg_row, reg_col):
         """À COMPLÉTER!
@@ -113,6 +116,9 @@ class SudokuGrid:
 
         return out
 
+        # Utiliser un générateur pour cette méthode ne fait pas de sens et est moins pratique. Voici le code tout de même (remplace tout ce qu'il y a au-dessus)
+        # return (n for sublist in [self.grille[3 * reg_row + i][3 * reg_col:3 * reg_col + 3] for i in range(3)] for n in sublist)
+
     def get_empty_pos(self):
         """À COMPLÉTER!
         Cette méthode renvoit les positions des cases vides dans la grille de Sudoku,
@@ -130,7 +136,16 @@ class SudokuGrid:
 
         return out
 
-    def write(self, i, j, v, force=False):
+        # Utiliser un générateur pour cette méthode ne fait pas de sens et est moins pratique. Voici le code tout de même (remplace tout ce qu'il y a au-dessus)
+        # return ((i, j) for i, row in enumerate(self.grille) for j, n in enumerate(row) if n == 0)
+
+    def count_empty_pos(self):
+        """
+        Méthode rajoutée pour accélerer le solveur
+        """
+        return sum(row.count(0) for row in self.grille)
+
+    def write(self, i, j, v, force=False, playmode=False):
         """À COMPLÉTER!
         Cette méthode écrit la valeur ``v`` dans la case ``(i,j)`` de la grille de Sudoku.
         *Variante avancée: Levez une exception si ``i``, ``j`` ou ``v``
@@ -143,7 +158,7 @@ class SudokuGrid:
         """
         if 0 <= i <= 8 and 0 <= j <= 8 and 0 <= v <= 9 and (self.grille[i][j] == 0 or force):
             self.grille[i][j] = v
-        else:
+        elif not playmode: # playmode = pour ne pas crasher le programme en mode jeu (play_soduku.py)
             raise ValueError()
 
     def copy(self):
@@ -155,8 +170,6 @@ class SudokuGrid:
         :return: Une copie de la grille courrante
         :rtype: SudokuGrid
         """
-        initial_values_str = ""
-        for row in self.grille:
-            initial_values_str += ''.join(str(e) for e in row)
-
-        return SudokuGrid(initial_values_str)
+        new_SudokuGrid = self.__new__(self.__class__)
+        new_SudokuGrid.grille = deepcopy(self.grille)
+        return new_SudokuGrid

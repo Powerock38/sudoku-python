@@ -1,3 +1,4 @@
+#!/bin/python3
 # -*-coding: utf8-*-
 
 import sys
@@ -72,11 +73,9 @@ class SudokuGame:
         elif self.pynput_sucks(key) != None:
             n = self.grid.get_row(self.cursorY)[self.cursorX]
 
-            isInitial = self.initialGrid.get_row(
-                self.cursorY)[self.cursorX] == n and n != 0
+            isInitial = self.initialGrid.get_row(self.cursorY)[self.cursorX] == n and n != 0
 
-            self.grid.write(self.cursorY, self.cursorX,
-                            self.pynput_sucks(key), force=not isInitial)
+            self.grid.write(self.cursorY, self.cursorX, self.pynput_sucks(key), force=not isInitial, playmode=True)
 
         self.display()
 
@@ -113,9 +112,11 @@ class SudokuGame:
 
 
 if __name__ == "__main__":
-    if sys.argv[1] != None and sys.argv[2] != None:
+    if len(sys.argv) == 3:
         grid = SudokuGrid.from_file(sys.argv[1], int(sys.argv[2]))
     else:
+        print("Lecture de la grille par l'entrée standard")
+        print("Vous pouvez aussi lire la grille depuis un fichier avec la syntaxe :", sys.argv[0], "<file> <line>")
         grid = SudokuGrid.from_stdin()
 
     SudokuGame(grid)
